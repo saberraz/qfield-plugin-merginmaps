@@ -17,7 +17,9 @@ if [ -n "${RECORD:-}" ]; then
 fi
 extra=()
 if [ -d "$here/$name/driver" ]; then extra+=("$here/$name/driver"); fi   # optional test-driver app plugin
-"$here/run_in_qfield.sh" "$work/project/$name.qgs" "${E2E_TIMEOUT:-120}" "$work/qfield.log" "$work/plugin/mergin" "${extra[@]}" &
+# NO_PLUGIN=1: start without the plugin installed (install_e2e installs it from the release URL)
+plugins=(); [ -n "${NO_PLUGIN:-}" ] || plugins+=("$work/plugin/mergin")
+"$here/run_in_qfield.sh" "$work/project/$name.qgs" "${E2E_TIMEOUT:-120}" "$work/qfield.log" "${plugins[@]+"${plugins[@]}"}" "${extra[@]+"${extra[@]}"}" &
 qf=$!
 # The test logs "E2E SHOT <name>"; capture the X display (:99) when that appears.
 # It logs "E2E SERVER <action>" to have tests/qfield/<name>/server_actions.py act as another user on the server;

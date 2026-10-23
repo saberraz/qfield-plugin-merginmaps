@@ -118,6 +118,7 @@ python3 -I tests/server/mock_multi_workspace.py &         # 3-workspace account 
 QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen qmltestrunner -input tests/qml
 Xvfb :99 -screen 0 540x960x24 &                           # or: Xwayland :99 -geometry 540x960
 S=<work dir> PYTHON=<py> tests/qfield/run_e2e.sh workspaces_e2e   # also: auth_e2e, login_e2e, projects_e2e, sync_e2e
+S=<work dir> NO_PLUGIN=1 tests/qfield/run_e2e.sh install_e2e      # installs the published release from its URL
 ```
 
 Run `tests/server/reset_dummy_points.sh` before repeating `sync_e2e` on the same server.

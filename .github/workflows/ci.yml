@@ -99,6 +99,8 @@ jobs:
           run projects_e2e 300
           run workspaces_e2e 150
           run sync_e2e 500
+          # the published release, installed through QField's "Install plugin from URL" (as users do)
+          NO_PLUGIN=1 run install_e2e 90
           exit $fail
 
       - name: Screenshots and logs
