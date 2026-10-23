@@ -71,7 +71,7 @@ Tap the **Mergin Maps** toolbar button.
 
 ## Limitations
 
-- **SSO accounts** can't sign in yet. Mergin Maps' SSO sign-in redirects to the Mergin Maps app, which a QField plugin cannot receive.
+- **SSO accounts** can't sign in yet. Mergin Maps' SSO sign-in redirects to the Mergin Maps app, which a QField plugin cannot receive. The plan (a `qfield://` redirect, or a device-code flow on the server) is in [#2](https://github.com/saberraz/qfield-plugin-merginmaps/issues/2).
 - **Deleting files.** QField only lets plugins delete project folders and media files. When a colleague deletes a GeoPackage or text file on the server, the plugin empties the local copy and records it so it is never uploaded again; the empty file stays on the device.
 - **New files** are uploaded when QField recognises their type (data, images, audio, video, text). Files with other extensions are not detected; files that were already in the project always sync.
 - **Large files** are held in memory while they download or upload. GeoPackages of several hundred MB may be too large on low-memory devices.

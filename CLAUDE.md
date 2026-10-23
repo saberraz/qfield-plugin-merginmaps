@@ -54,7 +54,9 @@ All code is QML + JS inside `plugin/` (the zip root).
   * "Sign up" follows mobile's `canSignUp`: only when `/config` has `server_type` `saas` or `ee` **and** `user_self_registration: true` (app.merginmaps.com: yes; CE: never). Before `/config` answers it is shown only for the default server.
   * Target (`MerginUtils.signUpUrl`): SaaS → `<server>/register` (mobile signs up in-app; the plugin opens the dashboard's page in the browser); EE → the server root, as mobile does.
   * Verified by `tests/qfield/login_e2e` (needs internet for app.merginmaps.com's `/config`; "Sign up" is not clicked because it opens a browser).
-* **SSO is not supported.** Mobile's OAuth redirect (`https://hello.merginmaps.com/mobile/sso-redirect` app link, or a localhost server on desktop) cannot reach a QField plugin. It would need a server-side flow, e.g. OAuth device code or a "copy this code" page.
+* **SSO is not supported** (issue #2). Mobile uses OAuth2 auth code + PKCE via `/v2/sso/config`, `/v2/sso/connections`, `/v2/sso/authorize`, `/v2/sso/token`, redirecting to the `https://hello.merginmaps.com/mobile/sso-redirect` app link (owned by the Mergin Maps app) or a localhost:10042 listener on desktop; neither can reach a QField plugin.
+  * Feasible route on Android/iOS: QField registers `qfield://` and emits incoming URLs as the `iface.executeAction(url)` signal, so a plugin can receive `qfield://merginmaps-sso?code=…` (QField itself only handles types `local`/`cloud`). Needs the Mergin server to allow that redirect URI. Desktop QField does not register the scheme: needs a server device-code (RFC 8628) or "copy this code" flow.
+  * Open problem: V4 has no secure random source for the PKCE verifier/state.
 * Mergin REST reference: https://github.com/MerginMaps/server (API spec) and the mobile app's `merginapi.cpp` (https://github.com/MerginMaps/mobile).
 
 ### A1. Workspaces (`plugin/qml/MerginWorkspaces.qml`)
