@@ -65,6 +65,24 @@ Tap the **Mergin Maps** toolbar button.
 - Tap a project to open it.
 - The **⋮** menu offers **Synchronise project** and **Remove from device**. Removing deletes the local copy and any unsynchronised changes; the project stays on the server.
 
+### Position tracking
+If the Mergin Maps project has position tracking enabled (in QGIS: Mergin Maps project settings → Position tracking), use **QField's own tracking**:
+1. Open it from QField's location button → **Tracking**. The Mergin `tracking_layer` is already selected.
+2. Tap **Start tracking**. The form shows *Tracked by* and the start time already filled in.
+3. Collect as usual, then stop tracking from QField.
+
+The plugin doesn't change how QField tracks. It only fills in the track's attributes, the way Mergin Maps mobile does:
+- **start time** = the first recorded point;
+- **end time** = when tracking stops;
+- **total distance**, from the layer's own expression;
+- **tracked by** = your Mergin username.
+
+Anything you typed in the form is kept.
+
+**You can sync while tracking.** Tap the sync button at any time: the track recorded so far is uploaded (with its distance and end time so far), and tracking carries on afterwards on the same track. Each sync uploads a longer version of the same track. Positions received during the few seconds a sync takes aren't recorded, so the track has a straight segment there.
+
+Mergin Maps' expression variables (`@mm_username`, `@mm_user_email`, `@mm_full_name`, `@mm_project_name`, `@mm_project_full_name`, `@mm_project_version`, `@mm_url`, and the older `@mergin_*` names) are available in every form of an open Mergin project. Fields that use them, like a "surveyor" field defaulting to `@mm_username`, fill in as in Mergin Maps mobile.
+
 ### Workspaces and account
 - Tap your **initials** (top right) to open your account: name, email, server, current workspace and role, storage used, **Manage Account** (opens the Mergin Maps dashboard) and **Sign out**.
 - If you belong to several workspaces (app.merginmaps.com or Enterprise Edition), tap the workspace row and choose another workspace on **Select workspace**. The Projects tab then lists that workspace's projects. The plugin remembers your choice.
@@ -76,6 +94,10 @@ Tap the **Mergin Maps** toolbar button.
 - **New files** are uploaded when QField recognises their type (data, images, audio, video, text). Files with other extensions are not detected; files that were already in the project always sync.
 - **Large files** are held in memory while they download or upload. GeoPackages of several hundred MB may be too large on low-memory devices.
 - Projects downloaded with plugin **0.4** still work but can't be removed with **Remove from device**.
+- **Tracking:**
+  - Positions received while a sync runs aren't recorded.
+  - The M value (stored with each vertex) is whatever QField's Tracking dialog is set to: *elapsed time* by default. Mergin Maps mobile stores timestamps. Choose "Timestamp" in the dialog if you need them.
+  - Tested with simulated positions on desktop QField; not yet on a phone, and iOS is untested.
 - Each project gets its own folder: `QField/Created Projects/mm_<workspace>_<project>/`. That folder also contains a small helper project `mm_<workspace>_<project>.qgz`, which the plugin uses to release files during sync. Open the Mergin project through the plugin's Home tab.
 
 ## Troubleshooting
@@ -95,6 +117,7 @@ The plugin is QML and JavaScript only (`plugin/`):
 | `qml/MerginWorkspaces.qml` | Your workspaces and the active one |
 | `qml/MerginProjects.qml` | Server project list, projects on this device, download, removal |
 | `qml/MerginSync.qml` | Two-way sync (pull with rebase, then push), following the official `mergin-client` |
+| `qml/MerginTracking.qml`, `js/trackingplan.js` | Mergin variables, completing tracks on the tracking layer, keeping QField's tracking going through a sync |
 | `qml/GeodiffWorker.qml`, `js/geodiffworker.js`, `js/geodiff_inc.js` | geodiff (from [geodiff-js](https://github.com/saberraz/geodiff-js)) in a background thread |
 | `qml/MerginPanel.qml`, `main.qml` | User interface |
 
@@ -106,7 +129,7 @@ Every GeoPackage keeps a base copy in `<project>/.mergin/`, as in the other Merg
 |---|---|---|
 | Unit tests (`tests/qml`) | Helpers, sync planning, geodiff worker vs native pygeodiff | CI on every push |
 | Integration (`tests/qml`) | Sign in, session renewal, project listing, chunked downloads and workspaces against a real Mergin Maps CE server and a mock multi-workspace server | CI (podman) |
-| End-to-end in real QField (`tests/qfield`) | QField 4.3.6 drives the actual UI. Covers sign in and sign up, Change server, download of 4 projects (including Unicode paths, chunked files and real QField samples), Home/Projects, Remove from device, account and workspace switching, and two-user sync: push, pull with rebase, conflicts, server down then recovery, and a file deleted on the server. Server and device copies are then checked independently | CI (Xvfb), screenshots kept as artifacts |
+| End-to-end in real QField (`tests/qfield`) | QField 4.3.6 drives the actual UI. Covers sign in and sign up, Change server, download of 4 projects (including Unicode paths, chunked files and real QField samples), Home/Projects, Remove from device, account and workspace switching, two-user sync (push, pull with rebase, conflicts, server down then recovery, a file deleted on the server), and position tracking with QField's own tracking (simulated GNSS, syncing twice while tracking). Server and device copies are then checked independently | CI (Xvfb), screenshots kept as artifacts |
 | geodiff-js | geodiff's C++ suite in Qt, differential fuzzing against native geodiff, robustness | [geodiff-js CI](https://github.com/saberraz/geodiff-js/actions) |
 
 Running locally (Linux, podman, Qt 6.10.3 from `aqtinstall`, a Python with GDAL bindings and `mergin-client`, and the QField AppImage extracted to `$S/qfield-app/squashfs-root`):
@@ -117,7 +140,7 @@ PYTHON=<py> tests/server/prepare_test_projects.sh         # 2 real + 2 dummy pro
 python3 -I tests/server/mock_multi_workspace.py &         # 3-workspace account on :5055
 QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen qmltestrunner -input tests/qml
 Xvfb :99 -screen 0 540x960x24 &                           # or: Xwayland :99 -geometry 540x960
-S=<work dir> PYTHON=<py> tests/qfield/run_e2e.sh workspaces_e2e   # also: auth_e2e, login_e2e, projects_e2e, sync_e2e
+S=<work dir> PYTHON=<py> tests/qfield/run_e2e.sh workspaces_e2e   # also: auth_e2e, login_e2e, projects_e2e, sync_e2e, tracking_e2e
 S=<work dir> NO_PLUGIN=1 tests/qfield/run_e2e.sh install_e2e      # installs the published release from its URL
 ```
 

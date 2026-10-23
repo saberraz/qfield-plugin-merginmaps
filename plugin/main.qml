@@ -32,6 +32,15 @@ Item {
     id: merginSync
     client: merginClient
     projects: merginProjects
+    tracking: merginTracking
+  }
+
+  MerginTracking {
+    id: merginTracking
+    client: merginClient
+    projects: merginProjects
+    sync: merginSync
+    workspaces: merginWorkspaces
   }
 
   MerginPanel {
@@ -50,6 +59,7 @@ Item {
     property alias panel: merginPanel
     property alias syncEngine: merginSync
     property alias workspaces: merginWorkspaces
+    property alias tracking: merginTracking
     iconSource: Qt.resolvedUrl("icons/MerginMapsLogo.svg")
     iconColor: "transparent"   // draw the logo in its own colours
     bgcolor: Theme.darkGray

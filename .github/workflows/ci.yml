@@ -32,7 +32,7 @@ jobs:
       - name: Unit tests (no server)
         run: |
           sudo apt-get install -yq libegl1 libxkbcommon0 >/dev/null
-          for t in tst_merginutils tst_syncplan tst_geodiffworker; do
+          for t in tst_merginutils tst_syncplan tst_geodiffworker tst_trackingplan; do
             QT_QPA_PLATFORM=offscreen "$QT_ROOT_DIR/bin/qmltestrunner" -input "tests/qml/$t.qml"
           done
       - name: Package
@@ -101,6 +101,7 @@ jobs:
           run projects_e2e 300
           run workspaces_e2e 150
           run sync_e2e 500
+          run tracking_e2e 300
           # the published release, installed through QField's "Install plugin from URL" (as users do). The versioned
           # zip, not the stable one, so the stable file's download count only reflects real installs.
           tag="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName)"
