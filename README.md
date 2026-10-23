@@ -20,11 +20,15 @@ A [QField](https://qfield.org) plugin that connects QField to [Mergin Maps](http
 
 ## Install
 
+<img src="docs/media/install-qr.png" alt="QR code of the install URL" width="180" align="right">
+
 1. In QField, open the main menu (☰) and go to **Settings → General → Manage plugins**.
-2. Tap **Install plugin from URL** and enter:
-   ```
-   https://github.com/saberraz/qfield-plugin-merginmaps/releases/latest/download/qfield-plugin-merginmaps.zip
-   ```
+2. Tap **Install plugin from URL**, then either:
+   - tap the **QR code button** in the URL field and scan the code on the right (QField starts the installation as soon as it reads it), or
+   - enter the URL:
+     ```
+     https://github.com/saberraz/qfield-plugin-merginmaps/releases/latest/download/qfield-plugin-merginmaps.zip
+     ```
 3. When QField asks, allow the plugin to run.
 4. A **Mergin Maps** button appears in the toolbar, on the map's side.
 
