@@ -50,8 +50,8 @@ Item {
     property alias panel: merginPanel
     property alias syncEngine: merginSync
     property alias workspaces: merginWorkspaces
-    iconSource: Qt.resolvedUrl("icon.svg")
-    iconColor: Theme.mainColor
+    iconSource: Qt.resolvedUrl("icons/MerginMapsLogo.svg")
+    iconColor: "transparent"   // draw the logo in its own colours
     bgcolor: Theme.darkGray
     round: true
 

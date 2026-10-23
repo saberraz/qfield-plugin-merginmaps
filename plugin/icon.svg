@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M20 11a8 8 0 0 0-14.6-4.5"/>
-  <path d="M4 4v3h3"/>
-  <path d="M4 13a8 8 0 0 0 14.6 4.5"/>
-  <path d="M20 20v-3h-3"/>
-  <circle cx="12" cy="12" r="2.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="53 53 128 128" width="128" height="128">
+  <!-- Mergin Maps logo mark, for light backgrounds (QField plugin list) -->
+  <path d="M117 159.67H159.66V74.34H117V53H181V181H117V159.67Z" fill="#73D19C"/>
+  <path d="M82.4724 117C82.4724 136.072 97.9279 151.517 116.99 151.517V82.4819C97.9179 82.4819 82.4724 97.9374 82.4724 117Z" fill="#73D19C"/>
+  <path d="M117 159.67H74.33V74.34H117V53H53V181H117V159.67Z" fill="#12181F"/>
+  <path d="M151.518 117C151.518 136.072 136.062 151.517 117 151.517V82.4819C136.072 82.4819 151.518 97.9374 151.518 117Z" fill="#12181F"/>
 </svg>
