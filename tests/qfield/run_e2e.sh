@@ -9,6 +9,10 @@ name="$1"; work="$S/e2e/$name"
 rm -rf "$work"; mkdir -p "$work/plugin/mergin" "$work/project"
 cp -r "$root/plugin/." "$work/plugin/mergin/"
 cp -r "$here/$name/." "$work/project/"; rm -rf "$work/project/driver"; mkdir -p "$work/screenshots" "$work/project/signals"
+# install_e2e: INSTALL_URL=<zip URL> overrides the release URL in the project plugin
+if [ -n "${INSTALL_URL:-}" ] && [ -f "$work/project/$name.qml" ]; then
+  sed -i "s#https://github.com/saberraz/qfield-plugin-merginmaps/releases/latest/download/qfield-plugin-merginmaps.zip#$INSTALL_URL#" "$work/project/$name.qml"
+fi
 # Optional screencast: RECORD=<file.mp4> RECORD_SIZE=<WxH> records the top-left of display :99 while QField runs.
 if [ -n "${RECORD:-}" ]; then
   ffmpeg -loglevel error -y -f x11grab -draw_mouse 0 -framerate 25 -video_size "${RECORD_SIZE:-540x960}" -i :99.0+0,0 \

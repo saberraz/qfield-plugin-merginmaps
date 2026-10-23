@@ -82,6 +82,8 @@ jobs:
           Xvfb :99 -screen 0 540x960x24 >/dev/null 2>&1 &
 
       - name: End-to-end tests in QField
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -o pipefail
           fail=0
@@ -99,7 +101,10 @@ jobs:
           run projects_e2e 300
           run workspaces_e2e 150
           run sync_e2e 500
-          # the published release, installed through QField's "Install plugin from URL" (as users do)
+          # the published release, installed through QField's "Install plugin from URL" (as users do). The versioned
+          # zip, not the stable one, so the stable file's download count only reflects real installs.
+          tag="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName)"
+          export INSTALL_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/qfield-plugin-merginmaps-$tag.zip"
           NO_PLUGIN=1 run install_e2e 90
           exit $fail
 

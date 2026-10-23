@@ -3,7 +3,9 @@ import org.qfield
 
 // Installs the plugin the way users do: QField's plugin manager, "Install plugin from URL", with the public
 // release URL (also encoded in README's QR code). Run with NO_PLUGIN=1 so the plugin is not preinstalled.
-// Needs internet access. INSTALL_URL is fixed here: project plugins cannot read the environment.
+// Needs internet access. Project plugins cannot read the environment, so run_e2e.sh substitutes INSTALL_URL (if set)
+// for the URL below when it copies this file. CI uses the versioned zip, so the download count of the stable
+// qfield-plugin-merginmaps.zip (README link and QR code) only counts real installs.
 Item {
   id: t
   readonly property string url: "https://github.com/saberraz/qfield-plugin-merginmaps/releases/latest/download/qfield-plugin-merginmaps.zip"
