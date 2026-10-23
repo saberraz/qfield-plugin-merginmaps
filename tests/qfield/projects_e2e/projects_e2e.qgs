@@ -1,0 +1,16 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis projectname="projects_e2e" version="3.40.0">
+  <projectCrs><spatialrefsys><authid>EPSG:27700</authid></spatialrefsys></projectCrs>
+  <layer-tree-group>
+    <layer-tree-layer id="pts_1" name="pts" source="./data.gpkg|layername=survey_points" providerKey="ogr" checked="Qt::Checked" expanded="1"/>
+  </layer-tree-group>
+  <projectlayers>
+    <maplayer type="vector" geometry="Point" wkbType="Point">
+      <id>pts_1</id>
+      <datasource>./data.gpkg|layername=survey_points</datasource>
+      <layername>pts</layername>
+      <srs><spatialrefsys><authid>EPSG:27700</authid></spatialrefsys></srs>
+      <provider encoding="UTF-8">ogr</provider>
+    </maplayer>
+  </projectlayers>
+</qgis>

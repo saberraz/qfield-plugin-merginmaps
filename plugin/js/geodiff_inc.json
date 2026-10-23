@@ -1,0 +1,17 @@
+{
+  "release": "v2.3.2-js.1",
+  "repository": "https://github.com/saberraz/geodiff-js",
+  "geodiff_version": "2.3.2",
+  "geodiff_commit": "b3b132015d98b295ca99ebd928cd77d0292a58c3",
+  "patches": [
+    "0001-build-with-emscripten.patch"
+  ],
+  "sqlite": "sqlite-amalgamation-3460100",
+  "emscripten": "6.0.13",
+  "babel": "8.0.7",
+  "link_flags": "-O2 -fexceptions -sWASM=0 -sWASMFS=1 -sENVIRONMENT=web -sMODULARIZE=1 -sFORCE_FILESYSTEM=1 -sALLOW_MEMORY_GROWTH=1 -sINVOKE_RUN=0 -Wno-deprecated -sINITIAL_MEMORY=33554432 -sSTACK_SIZE=1048576",
+  "files": {
+    "geodiff_inc.js": "0323b72fb5345f360c77483bfdf130299eae7c8f00114006b12d765619099894",
+    "geodiff.qml.js": "b887fe32789e522541be217f6d59d71885993f438d2a9310aac4524c766799e1"
+  }
+}

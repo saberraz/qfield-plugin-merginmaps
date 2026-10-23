@@ -1,0 +1,115 @@
+# Daily: if saberraz/geodiff-js has a newer release than the one bundled in plugin/js/, verify its checksums,
+# run the plugin's geodiff tests with it and open a pull request (a draft if the tests fail).
+# Needs "Allow GitHub Actions to create and approve pull requests" (Settings > Actions > General).
+name: Update geodiff-js
+
+on:
+  schedule:
+    - cron: "47 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  GEODIFF_JS_REPO: saberraz/geodiff-js
+  QT_VERSION: "6.10.3"
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for a new geodiff-js release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest="$(gh release view -R "$GEODIFF_JS_REPO" --json tagName -q .tagName)"
+          current="$(python3 -c 'import json; print(json.load(open("plugin/js/geodiff_inc.json"))["release"])')"
+          branch="geodiff-js/$latest"
+          echo "bundled $current, latest $latest"
+          if [ "$latest" = "$current" ]; then echo "up to date"; exit 0; fi
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then echo "$branch already exists (pull request open?)"; exit 0; fi
+          echo "tag=$latest" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+      - name: Download and verify
+        if: steps.check.outputs.tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/gjs" && cd "$RUNNER_TEMP/gjs"
+          gh release download "$TAG" -R "$GEODIFF_JS_REPO" -p geodiff_inc.js -p BUILD.json -p SHA256SUMS -p test-report.md
+          sha256sum -c --ignore-missing SHA256SUMS
+          python3 - "$TAG" <<'PY'
+          import hashlib, json, sys
+          build = json.load(open("BUILD.json"))
+          assert hashlib.sha256(open("geodiff_inc.js", "rb").read()).hexdigest() == build["files"]["geodiff_inc.js"], "BUILD.json checksum"
+          meta = {"release": sys.argv[1], "repository": "https://github.com/saberraz/geodiff-js"}
+          meta.update(build)
+          json.dump(meta, open("geodiff_inc.json", "w"), indent=2)
+          PY
+          cp geodiff_inc.js geodiff_inc.json "$GITHUB_WORKSPACE/plugin/js/"
+
+      - uses: jurplel/install-qt-action@v4
+        if: steps.check.outputs.tag
+        with: { version: "${{ env.QT_VERSION }}", arch: linux_gcc_64, cache: true }
+
+      - name: Plugin geodiff tests
+        id: tests
+        if: steps.check.outputs.tag
+        continue-on-error: true
+        env:
+          QML_XHR_ALLOW_FILE_READ: "1"
+          QT_QPA_PLATFORM: offscreen
+          QT_LOGGING_RULES: "qt.qml.usedbeforedeclared=false"
+        run: |
+          sudo apt-get install -yq libegl1 libxkbcommon0 >/dev/null
+          set -o pipefail
+          for t in tst_geodiffworker tst_syncplan; do
+            "$QT_ROOT_DIR/bin/qmltestrunner" -input "tests/qml/$t.qml" 2>&1 | tee -a "$RUNNER_TEMP/plugin-tests.txt"
+          done
+
+      - name: Pull request
+        if: steps.check.outputs.tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.check.outputs.tag }}
+          BRANCH: ${{ steps.check.outputs.branch }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          TESTS: ${{ steps.tests.outcome }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add plugin/js/geodiff_inc.js plugin/js/geodiff_inc.json
+          git commit -q -m "Update geodiff-js to $TAG"
+          git push -q origin "$BRANCH"
+          {
+            echo "Updates the bundled geodiff-js from **$CURRENT** to **[$TAG](https://github.com/$GEODIFF_JS_REPO/releases/tag/$TAG)**."
+            echo
+            if [ "$TESTS" = "success" ]; then
+              echo "Plugin geodiff tests (\`tst_geodiffworker\`, \`tst_syncplan\`): **passed**."
+            else
+              echo "> [!WARNING]"
+              echo "> Plugin geodiff tests **failed** with this build: see the [workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID). Opened as a draft."
+            fi
+            echo
+            echo "Checksums verified against the release's \`SHA256SUMS\` and \`BUILD.json\`. The full CI (unit, server, QField end-to-end) runs on this branch."
+            echo
+            cat "$RUNNER_TEMP/gjs/test-report.md"
+          } > "$RUNNER_TEMP/body.md"
+          draft=""; [ "$TESTS" = "success" ] || draft="--draft"
+          gh pr create --head "$BRANCH" --title "Update geodiff-js to $TAG" --body-file "$RUNNER_TEMP/body.md" $draft
+          # pull requests opened with GITHUB_TOKEN do not trigger workflows; a workflow_dispatch does
+          gh workflow run ci.yml --ref "$BRANCH"

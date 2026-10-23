@@ -1,0 +1,4 @@
+dist/
+.e2e/
+__pycache__/
+tests/qfield/*/signals/

@@ -1,0 +1,113 @@
+# Unit tests, server integration tests (a throwaway Mergin Maps CE server in podman + a mock multi-workspace server)
+# and end-to-end tests in real QField (Linux AppImage on Xvfb).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash   # -eo pipefail
+
+env:
+  QT_VERSION: "6.10.3"          # the Qt QField 4.3 ships
+  QFIELD_VERSION: "4.3.6"
+  QML_XHR_ALLOW_FILE_READ: "1"
+  QT_LOGGING_RULES: "qt.qml.usedbeforedeclared=false"
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with: { version: "${{ env.QT_VERSION }}", arch: linux_gcc_64, cache: true }
+      - name: Unit tests (no server)
+        run: |
+          sudo apt-get install -yq libegl1 libxkbcommon0 >/dev/null
+          for t in tst_merginutils tst_syncplan tst_geodiffworker; do
+            QT_QPA_PLATFORM=offscreen "$QT_ROOT_DIR/bin/qmltestrunner" -input "tests/qml/$t.qml"
+          done
+      - name: Package
+        run: ./scripts/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: dist/*.zip
+
+  server-and-qfield:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      S: ${{ github.workspace }}/.e2e
+      MERGIN_TEST_DIR: ${{ github.workspace }}/.e2e/mergin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with: { version: "${{ env.QT_VERSION }}", arch: linux_gcc_64, cache: true }
+
+      - name: Tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq podman python3-gdal python3-venv xvfb imagemagick libegl1 libxkbcommon0 libfuse2 >/dev/null
+          /usr/bin/python3 -m venv --system-site-packages "$RUNNER_TEMP/py" && "$RUNNER_TEMP/py/bin/pip" install -q mergin-client
+          "$RUNNER_TEMP/py/bin/python" -c "from osgeo import ogr; import mergin"   # system python3 has python3-gdal
+          echo "PYTHON=$RUNNER_TEMP/py/bin/python" >> "$GITHUB_ENV"
+          mkdir -p "$S"
+
+      - name: Mergin Maps CE test server + test projects
+        run: |
+          tests/server/start_local_mergin.sh
+          tests/server/prepare_test_projects.sh "$RUNNER_TEMP/projects"
+          python3 -I tests/server/mock_multi_workspace.py 5055 &
+
+      - name: Integration tests (CE server, mock multi-workspace server)
+        run: |
+          for t in tst_auth tst_projects_api tst_workspaces; do
+            QT_QPA_PLATFORM=offscreen "$QT_ROOT_DIR/bin/qmltestrunner" -input "tests/qml/$t.qml"
+          done
+
+      - name: QField ${{ env.QFIELD_VERSION }}
+        run: |
+          mkdir -p "$S/qfield-app" && cd "$S/qfield-app"
+          curl -sSfL -o qfield.AppImage "https://github.com/opengisch/QField/releases/download/v$QFIELD_VERSION/qfield-v$QFIELD_VERSION-linux-x64.AppImage"
+          chmod +x qfield.AppImage && ./qfield.AppImage --appimage-extract >/dev/null
+          Xvfb :99 -screen 0 540x960x24 >/dev/null 2>&1 &
+
+      - name: End-to-end tests in QField
+        run: |
+          set -o pipefail
+          fail=0
+          run() {
+            echo "::group::$1"
+            E2E_TIMEOUT="$2" tests/qfield/run_e2e.sh "$1" > "$S/$1.out" 2>&1 || fail=1
+            grep -a "E2E PASS\|E2E FAIL\|RESULT\|EXCEPTION\|DONE" "$S/e2e/$1/qfield.log" || true
+            grep -a "PASS\|FAIL\|RESULT" "$S/$1.out" || true
+            grep -aq "E2E FAIL\|EXCEPTION" "$S/e2e/$1/qfield.log" && fail=1
+            grep -aq "E2E DONE" "$S/e2e/$1/qfield.log" || { echo "::error::$1 did not finish"; fail=1; }
+            echo "::endgroup::"
+          }
+          run auth_e2e 120
+          run login_e2e 90
+          run projects_e2e 300
+          run workspaces_e2e 150
+          run sync_e2e 500
+          exit $fail
+
+      - name: Screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e
+          path: |
+            .e2e/e2e/*/screenshots
+            .e2e/e2e/*/qfield.log
+            .e2e/*.out
+          if-no-files-found: ignore

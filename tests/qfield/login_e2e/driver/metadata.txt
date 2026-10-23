@@ -1,0 +1,5 @@
+[general]
+name=Mergin E2E driver
+description=test only
+author=test
+version=0.1

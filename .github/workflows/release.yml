@@ -1,0 +1,33 @@
+# Push a tag "v<version>" (matching plugin/metadata.txt) to publish a release with the plugin zip.
+# Two copies are attached: qfield-plugin-merginmaps-v<version>.zip and qfield-plugin-merginmaps.zip, so
+# https://github.com/<owner>/qfield-plugin-merginmaps/releases/latest/download/qfield-plugin-merginmaps.zip always
+# installs the latest version. QField names the plugin folder after the zip without "-v<version>", so both
+# install into the same place and updates replace the old version.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check version
+        run: |
+          version="$(sed -n 's/^version=//p' plugin/metadata.txt)"
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::tag $GITHUB_REF_NAME does not match metadata.txt version $version"; exit 1; }
+      - name: Package
+        run: ./scripts/package.sh
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp dist/qfield-plugin-merginmaps-$GITHUB_REF_NAME.zip dist/qfield-plugin-merginmaps.zip
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes \
+            --notes "Install in QField: Settings > Plugins > Install plugin from URL > https://github.com/$GITHUB_REPOSITORY/releases/latest/download/qfield-plugin-merginmaps.zip" \
+            dist/qfield-plugin-merginmaps-$GITHUB_REF_NAME.zip dist/qfield-plugin-merginmaps.zip

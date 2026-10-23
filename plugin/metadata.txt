@@ -1,0 +1,7 @@
+[general]
+name=Mergin Maps
+description=Connect QField to a Mergin Maps server: log in, download projects and synchronise field edits.
+author=Lutra Consulting
+icon=icon.svg
+version=0.6.0
+homepage=https://github.com/saberraz/qfield-plugin-merginmaps
