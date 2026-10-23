@@ -24,7 +24,7 @@ PROJECTS = {
 def project_json(ns, name, version, size, i):
     return {"id": f"00000000-0000-0000-0000-{abs(hash(ns + name)) % 10**12:012d}", "name": name, "namespace": ns,
             "version": version, "disk_usage": size, "created": "2026-09-01T10:00:00Z",
-            "updated": f"2026-10-2{2 - min(i, 2)}T0{8 + i}:15:00Z", "access": {}, "permissions": {"delete": True, "update": True, "upload": True},
+            "updated": f"2026-10-2{2 - min(i, 2)}T{8 + i:02d}:15:00Z", "access": {}, "permissions": {"delete": True, "update": True, "upload": True},
             "tags": ["valid_qgis", "input_use"], "creator": 1, "has_conflict": False}
 
 

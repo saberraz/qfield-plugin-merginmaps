@@ -1118,6 +1118,7 @@ QfPopup {
           text: moreOptions.confirmRemove ? qsTr("Remove project?") : qsTr("More options")
         }
         RoundIconButton {
+          objectName: "merginMoreOptionsClose"
           anchors.right: parent.right
           anchors.verticalCenter: parent.verticalCenter
           bgColor: MMStyle.lightGreen

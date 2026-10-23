@@ -101,6 +101,7 @@ Item {
   // Progress card while syncing (Mergin Maps mobile style: polar card, grass progress bar).
   Rectangle {
     id: syncBanner
+    objectName: "merginSyncBanner"
     parent: plugin.mainWindow.contentItem
     visible: merginSync.syncing && !merginPanel.opened
     z: 1001
