@@ -32,7 +32,7 @@ jobs:
       - name: Unit tests (no server)
         run: |
           sudo apt-get install -yq libegl1 libxkbcommon0 >/dev/null
-          for t in tst_merginutils tst_syncplan tst_geodiffworker; do
+          for t in tst_merginutils tst_syncplan tst_geodiffworker tst_trackingplan; do
             QT_QPA_PLATFORM=offscreen "$QT_ROOT_DIR/bin/qmltestrunner" -input "tests/qml/$t.qml"
           done
       - name: Package
