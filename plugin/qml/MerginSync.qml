@@ -19,6 +19,8 @@ Item {
 
   property MerginClient client
   property MerginProjects projects
+  // optional: keeps QField's tracking going across the project swap (MerginTracking.qml)
+  property var tracking: null
 
   property bool syncing: false
   property real progress: 0
@@ -136,12 +138,20 @@ Item {
         sync.statusText = "";
         sync.progress = ok ? 1 : 0;
         sync.updateCurrent();
+        if (sync.tracking) {
+          try { sync.tracking.resumeAfterSync(state.trackers); } catch (e) { client.log("Tracking: resume failed: " + e); }
+        }
         client.log("Sync " + p.namespace + "/" + p.name + (ok ? " finished: " : " failed: ") + message);
         sync.syncFinished(ok, message);
       });
     };
 
     const start = function () {
+      // QField drops its trackers when the project changes: pause them (tracks completed and saved) and resume after
+      state.trackers = [];
+      if (sync.tracking) {
+        try { state.trackers = sync.tracking.pauseForSync(); } catch (e) { client.log("Tracking: pause failed: " + e); }
+      }
       projects.withProjectReleased(state.p, function (loaded, message) {
         if (!loaded) { finish(false, message); return; }
         try {

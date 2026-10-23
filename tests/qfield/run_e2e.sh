@@ -19,6 +19,13 @@ if [ -n "${RECORD:-}" ]; then
     -c:v libopenh264 -b:v 3M -pix_fmt yuv420p "$RECORD" &   # libopenh264: Fedora ffmpeg has no libx264
   rec=$!
 fi
+# Tests with a "needs_gnss" file get a simulated GNSS receiver (nmea_server.py) as QField's positioning device
+if [ -f "$here/$name/needs_gnss" ]; then
+  gnss_port="$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')"
+  python3 -I "$here/nmea_server.py" "$gnss_port" & gnss=$!
+  trap 'kill "$gnss" 2>/dev/null || true' EXIT
+  export QFIELD_POSITIONING_DEVICE="tcp:127.0.0.1:$gnss_port"
+fi
 extra=()
 if [ -d "$here/$name/driver" ]; then extra+=("$here/$name/driver"); fi   # optional test-driver app plugin
 # NO_PLUGIN=1: start without the plugin installed (install_e2e installs it from the release URL)

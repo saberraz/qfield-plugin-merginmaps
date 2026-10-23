@@ -2,6 +2,7 @@
 # Runs real QField (extracted AppImage) headless on <project dir>/<name>.qgs with project plugin <name>.qml.
 # Optional 4th, 5th... args: app plugin dirs to install and enable (folder name = uuid).
 # Isolated HOME so the user's QField config is untouched. Usage: run_in_qfield.sh <project.qgs> <timeout s> <log>
+# QFIELD_POSITIONING_DEVICE=<device id> (e.g. tcp:127.0.0.1:11123) selects and activates a positioning device.
 set -uo pipefail
 S="${S:?set S to the work dir containing qfield-app/ and qfhome/}"
 proj="$(realpath "$1")"; plugin="${proj%.qgs}.qml"; key="${plugin//\//_}"
@@ -9,6 +10,9 @@ H=$S/qfhome; rm -rf $H; mkdir -p $H/.config/OPENGIS.ch
 cat > $H/.config/OPENGIS.ch/QField.conf <<CONF
 [General]
 enableInfoCollection=false
+${QFIELD_POSITIONING_DEVICE:+positioningDevice=$QFIELD_POSITIONING_DEVICE
+positioningDeviceName=Simulated receiver
+positioningActivated=true}
 
 [QField]
 defaultProject=$proj
